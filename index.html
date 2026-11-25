@@ -418,6 +418,9 @@ function renderItems(){
 
   const tv = textVersion();
   if (pageMessage) $app.append(h("div",{class:"page-msg",id:"pageMsg"},pageMessage));
+  // 모듈 첫 화면 안내(예: L5의 '조직' 뜻). survey_data.json의 module_instructions에서 읽음
+  const mi = DATA.module_instructions && DATA.module_instructions[p.module];
+  if (mi && mi[tv] && p.key === p.module + "-1") $app.append(h("div",{class:"note",id:"moduleNote"},mi[tv]));
   p.items.forEach((it, idx) => {
     const name = "q_" + it.id;
     const fs = h("fieldset",{class:"scale"}, h("legend",null,it.text[tv]));
@@ -580,8 +583,17 @@ function renderDone(){
 /* 링크로 학교·유형 고정: ?school=yeonsung&type=학생_AI기초
    링크에 들어 있는 항목은 그 하나만 보이고 다른 것으로 바꿀 수 없음 */
 const LOCK = { school:null, type:null };
+/* 짧은 링크 코드: ?c=y1  (학교 y·i·d + 유형 번호 1~6, 학교만 고정하려면 ?c=y) */
+const SHORT_SCHOOL = { y:"yeonsung", i:"inha", d:"dongyang" };
+const SHORT_TYPE = { "1":"학생_AI기초", "2":"학생_XAI", "3":"지역주민", "4":"재직자", "5":"교원", "6":"직원" };
 function readLock(){
   const q = new URLSearchParams(location.search);
+  const c = (q.get("c") || "").toLowerCase();
+  if (c){
+    if (SHORT_SCHOOL[c[0]]) LOCK.school = SHORT_SCHOOL[c[0]];
+    if (c[1] && SHORT_TYPE[c[1]] && DATA.respondent_types[SHORT_TYPE[c[1]]]) LOCK.type = SHORT_TYPE[c[1]];
+    return;
+  }
   const sc = q.get("school"); if (sc && CONFIG.SCHOOLS.some(s=>s.code===sc)) LOCK.school = sc;
   const ty = q.get("type"); if (ty && DATA.respondent_types[ty]) LOCK.type = ty;
 }
